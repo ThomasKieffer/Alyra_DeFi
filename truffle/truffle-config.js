@@ -1,8 +1,10 @@
 const HDWalletProvider = require("@truffle/hdwallet-provider");
+const NonceTrackerSubprovider = require("web3-provider-engine/subproviders/nonce-tracker");
+
 require("dotenv").config();
 
 module.exports = {
-  contracts_build_directory: "../client/src/contracts",
+  // contracts_build_directory: "../client/src/contracts",
   networks: {
     development: {
       host: "127.0.0.1", // Localhost (default: none)
@@ -23,7 +25,12 @@ module.exports = {
     },
     kovan: {
       provider: function () {
-        return new HDWalletProvider({ mnemonic: { phrase: `${process.env.MNEMONIC}` }, providerOrUrl: `https://kovan.infura.io/v3/${process.env.INFURA_ID}` });
+        // return new HDWalletProvider({ mnemonic: { phrase: `${process.env.MNEMONIC}` }, providerOrUrl: `https://kovan.infura.io/v3/${process.env.INFURA_ID}` });
+        var wallet = new HDWalletProvider({ mnemonic: { phrase: `${process.env.MNEMONIC}` }, providerOrUrl: `https://kovan.infura.io/v3/${process.env.INFURA_ID}` });
+        var nonceTracker = new NonceTrackerSubprovider();
+        wallet.engine._providers.unshift(nonceTracker);
+        nonceTracker.setEngine(wallet.engine);
+        return wallet;
       },
       network_id: 42,
     },
