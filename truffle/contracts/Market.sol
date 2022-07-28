@@ -7,24 +7,32 @@ import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
 
 contract Market  is Ownable {
     //same global logic as aave we put tokens addresses in a map to ERC20
-    mapping(address => ERC20) private _reserves;
+    mapping(address => ERC20) private reserves;
     //we make a map for each users addresses we have a map of token addresses to the user balance in that token
-    mapping(address => mapping(address => uint)) private _balances;
+    mapping(address => mapping(address => uint)) private balances;
+    
+    event TokenAdded(address asset);
+    event Deposited(uint amount, address asset, address user);
+    event Withdrawn(uint amount, address asset, address user);
 
     //Owner can add ERC20 token with their addresses
-    function addToken(address asset) external onlyOwner {
-        _reserves[asset] = ERC20(asset);
+    function addToken(address _asset) external onlyOwner {
+        reserves[_asset] = ERC20(_asset);
+        emit TokenAdded(_asset);
     }
 
     //BE CAREFULL of reentrency !
-    function deposit(uint amount, address asset) external {
-        _balances[msg.sender][asset] += amount;
-        _reserves[asset].transferFrom(msg.sender, address(this), amount);
+    function deposit(uint _amount, address _asset) external {
+        balances[msg.sender][_asset] += _amount;
+        reserves[_asset].transferFrom(msg.sender, address(this), _amount);
+
+        emit Deposited(_amount, _asset, msg.sender);
     }
 
-    function withdraw(address to, uint amount, address asset) external {
-        // require(_reserves[asset].balanceOf(address(this)) >= amount, "Withdrawing too much"); pretty sure it's useless because the transfert will simply not append
-        require(_balances[msg.sender][asset] >= amount, "Withdrawing too much");
-        _reserves[asset].transfer(to, amount);
+    function withdraw(uint _amount, address _asset) external {
+        // require(reserves[asset].balanceOf(address(this)) >= amount, "Withdrawing too much"); pretty sure it's useless because the transfert will simply not append
+        require(balances[msg.sender][_asset] >= _amount, "Withdrawing too much");
+        reserves[_asset].transfer(msg.sender, _amount);
+        emit Withdrawn(_amount,  _asset, msg.sender);
     }
 }

@@ -29,7 +29,7 @@ module.exports = async function (deployer, _network, accounts) {
   console.log("\n");
 
   //transfert from market to account1
-  await market.withdraw(accounts[1], 1000, d4a.address, { from: accounts[1] });
+  await market.withdraw(1000, d4a.address, { from: accounts[1] });
   const balance3 = await d4a.balanceOf(accounts[1]);
   console.log("balance accounts[1] after tranfert from market = " + balance3.toString());
   const balance33 = await d4a.balanceOf(market.address);
