@@ -72,7 +72,7 @@ contract Market  is Ownable {
         require(reserves[_asset].token.transfer(msg.sender, _amount), "Withdraw failed");
         balances[msg.sender][_asset].amount -= _amount;
         updateRewardBalance(_asset);
-        if(getBalance(_asset) == 0 ){
+        if(getBalance(_asset) > 0 ){
             balances[msg.sender][_asset].lastTransactTimeStamp = block.timestamp;
         } else {
             balances[msg.sender][_asset].lastTransactTimeStamp = 0;
@@ -92,7 +92,7 @@ contract Market  is Ownable {
         rewardToken.mint(msg.sender, rewardBalance[msg.sender]);
     }
 
-    function calculateRewardEarned(address _asset) private view onlySupportedToken(_asset) returns(uint) {
+    function calculateRewardEarned(address _asset) public view onlySupportedToken(_asset) returns(uint) {
         //(amount * rewardPerHourOfAssetForToken) / nbrOfTokenForRewardPerhour
         uint currentBalance = getBalance(_asset);
         uint lastTransact = balances[msg.sender][_asset].lastTransactTimeStamp;
