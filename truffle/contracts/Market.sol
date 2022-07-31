@@ -28,14 +28,15 @@ contract Market  is Ownable {
     //we make a map for each users addresses we have a map of token addresses to the user balance in that token
     mapping(address => mapping(address => Balance)) private balances;
     //the amount of rewards for each users
-    mapping(address => uint) public rewardBalance;
+    mapping(address => uint) private rewardBalance;
 
     D4Atoken rewardToken;
     
     event TokenAdded(address asset);
     event Deposited(uint amount, address asset, address user);
     event Withdrawn(uint amount, address asset, address user);
-    // event RewardUpdated(uint amount, address user);
+    event RewardUpdated(uint amount, address user);
+    event Claimed(uint amount, address user);
 
     modifier onlySupportedToken(address _asset) {
         require(reserves[_asset].isSupported, "Token not supported");
@@ -48,6 +49,7 @@ contract Market  is Ownable {
 
     //Owner can add ERC20 token with their addresses
     function addToken(address _asset, uint _rewardPerHourFor1TKN) external onlyOwner {
+        require(reserves[_asset].isSupported == false ,"Token already supported");
         reserves[_asset] = Reserve({
             token: ERC20(_asset), 
             rewardPerHourFor1TKN: _rewardPerHourFor1TKN,
@@ -60,8 +62,8 @@ contract Market  is Ownable {
     //BE CAREFULL of reentrency !
     function deposit(uint _amount, address _asset) external onlySupportedToken(_asset) {
         require(reserves[_asset].token.transferFrom(msg.sender, address(this), _amount), "Deposit failed");
-        balances[msg.sender][_asset].amount += _amount;
         updateRewardBalance(_asset);
+        balances[msg.sender][_asset].amount += _amount;
         balances[msg.sender][_asset].lastTransactTimeStamp = block.timestamp;
         emit Deposited(_amount, _asset, msg.sender);
     }
@@ -70,8 +72,8 @@ contract Market  is Ownable {
         // require(reserves[asset].balanceOf(address(this)) >= amount, "Withdrawing too much"); pretty sure it's useless because the transfert will simply not append
         require(getBalance(_asset) >= _amount, "Withdrawing too much");
         require(reserves[_asset].token.transfer(msg.sender, _amount), "Withdraw failed");
-        balances[msg.sender][_asset].amount -= _amount;
         updateRewardBalance(_asset);
+        balances[msg.sender][_asset].amount -= _amount;
         if(getBalance(_asset) > 0 ){
             balances[msg.sender][_asset].lastTransactTimeStamp = block.timestamp;
         } else {
@@ -82,20 +84,30 @@ contract Market  is Ownable {
 
     function claim() external {
         address tokenAddr;
+        uint reward;
         for(uint i = 0; i < tokens.length; ++i){
             tokenAddr = tokens[i];
-            if(balances[msg.sender][tokenAddr].lastTransactTimeStamp > 0 ) {
+            if(getLastTransact(tokenAddr) > 0 ) {
                 updateRewardBalance(tokenAddr);
                 balances[msg.sender][tokenAddr].lastTransactTimeStamp = block.timestamp;
             }
         }
-        rewardToken.mint(msg.sender, rewardBalance[msg.sender]);
+        require(rewardBalance[msg.sender] > 0, "No rewards to be minted");
+        reward = rewardBalance[msg.sender];
+        rewardBalance[msg.sender] = 0;
+        rewardToken.mint(msg.sender, reward);
+        emit Claimed(reward, msg.sender);
     }
 
-    function calculateRewardEarned(address _asset) public view onlySupportedToken(_asset) returns(uint) {
+    function updateRewardBalance(address _asset) private onlySupportedToken(_asset) {
+        rewardBalance[msg.sender] += calculateRewardEarned(_asset);
+        emit RewardUpdated(rewardBalance[msg.sender], msg.sender);
+    }
+
+    function calculateRewardEarned(address _asset) private view onlySupportedToken(_asset) returns(uint) {
         //(amount * rewardPerHourOfAssetForToken) / nbrOfTokenForRewardPerhour
         uint currentBalance = getBalance(_asset);
-        uint lastTransact = balances[msg.sender][_asset].lastTransactTimeStamp;
+        uint lastTransact = getLastTransact(_asset);
         uint rewardPerHourFor1TKN = reserves[_asset].rewardPerHourFor1TKN;
         if(lastTransact > 0) {
             //We have to calculate the number of rewards by hour for the current balance
@@ -107,12 +119,26 @@ contract Market  is Ownable {
         }
     }
 
-    function updateRewardBalance(address _asset) private onlySupportedToken(_asset) {
-        rewardBalance[msg.sender] += calculateRewardEarned(_asset);
-        // emit RewardUpdated(rewardBalance[msg.sender], msg.sender);
+    //This function allow to check the global rewards for any account without modifying state variables
+    function calculateTotalRewardEarned() public view returns(uint) {
+        address tokenAddr;
+        uint totalRewards = rewardBalance[msg.sender];
+        for(uint i = 0; i < tokens.length; ++i){
+            tokenAddr = tokens[i];
+            if( getLastTransact(tokenAddr) > 0 ) {
+                totalRewards += calculateRewardEarned(tokenAddr);
+            }
+        }
+        return totalRewards;
     }
+
 
     function getBalance(address _asset) public view onlySupportedToken(_asset) returns(uint) {
         return balances[msg.sender][_asset].amount;
+    }
+
+    // This should hep fot test to get the exact reward between two times
+    function getLastTransact(address _asset) public view onlySupportedToken(_asset) returns(uint) {
+        return balances[msg.sender][_asset].lastTransactTimeStamp;
     }
 }
