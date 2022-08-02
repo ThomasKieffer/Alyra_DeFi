@@ -21,16 +21,14 @@ contract Market  is Ownable {
     }
     
     mapping(address => Reserve) private reserves;
-    //we have to keep the address of token accepted to iterate over the map when we claim
-    //because onlyOwner can add tokens we shouldn't have an array too big
-    address[] tokens;
-
     //we make a map for each users addresses we have a map of token addresses to the user balance in that token
     mapping(address => mapping(address => Balance)) private balances;
     //the amount of rewards for each users
-    mapping(address => uint) private rewardBalance;
-
-    D4Atoken rewardToken;
+    mapping(address => uint) private rewardBalances;
+    //we have to keep the address of token accepted to iterate over the map when we claim
+    //because onlyOwner can add tokens we shouldn't have an array too big
+    address[] public tokens;
+    D4Atoken public rewardToken;
     
     event TokenAdded(address asset);
     event Deposited(uint amount, address asset, address user);
@@ -61,7 +59,7 @@ contract Market  is Ownable {
 
     //BE CAREFULL of reentrency !
     function deposit(uint _amount, address _asset) external onlySupportedToken(_asset) {
-        require(reserves[_asset].token.transferFrom(msg.sender, address(this), _amount), "Deposit failed");
+        reserves[_asset].token.transferFrom(msg.sender, address(this), _amount);
         updateRewardBalance(_asset);
         balances[msg.sender][_asset].amount += _amount;
         balances[msg.sender][_asset].lastTransactTimeStamp = block.timestamp;
@@ -92,16 +90,16 @@ contract Market  is Ownable {
                 balances[msg.sender][tokenAddr].lastTransactTimeStamp = block.timestamp;
             }
         }
-        require(rewardBalance[msg.sender] > 0, "No rewards to be minted");
-        reward = rewardBalance[msg.sender];
-        rewardBalance[msg.sender] = 0;
+        require(rewardBalances[msg.sender] > 0, "No rewards to be minted");
+        reward = rewardBalances[msg.sender];
+        rewardBalances[msg.sender] = 0;
         rewardToken.mint(msg.sender, reward);
         emit Claimed(reward, msg.sender);
     }
 
     function updateRewardBalance(address _asset) private onlySupportedToken(_asset) {
-        rewardBalance[msg.sender] += calculateRewardEarned(_asset);
-        emit RewardUpdated(rewardBalance[msg.sender], msg.sender);
+        rewardBalances[msg.sender] += calculateRewardEarned(_asset);
+        emit RewardUpdated(rewardBalances[msg.sender], msg.sender);
     }
 
     function calculateRewardEarned(address _asset) private view onlySupportedToken(_asset) returns(uint) {
@@ -122,7 +120,7 @@ contract Market  is Ownable {
     //This function allow to check the global rewards for any account without modifying state variables
     function calculateTotalRewardEarned() public view returns(uint) {
         address tokenAddr;
-        uint totalRewards = rewardBalance[msg.sender];
+        uint totalRewards = rewardBalances[msg.sender];
         for(uint i = 0; i < tokens.length; ++i){
             tokenAddr = tokens[i];
             if( getLastTransact(tokenAddr) > 0 ) {
@@ -140,5 +138,15 @@ contract Market  is Ownable {
     // This should hep fot test to get the exact reward between two times
     function getLastTransact(address _asset) public view onlySupportedToken(_asset) returns(uint) {
         return balances[msg.sender][_asset].lastTransactTimeStamp;
+    }
+
+    //used for tests
+    function getReserve(address _asset) public view onlySupportedToken(_asset) returns(Reserve memory) {
+        return reserves[_asset];
+    }
+
+    //used for tests
+    function getRewardBalance() public view returns(uint) {
+        return rewardBalances[msg.sender];
     }
 }

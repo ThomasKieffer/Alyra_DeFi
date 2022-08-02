@@ -12,8 +12,10 @@ contract("Market", (accounts) => {
 
   let D4AInstance;
   let MarketInstance;
+  const aaveDAI = "0xFf795577d9AC8bD7D90Ee22b6C1703490b6512FD";
 
-  describe("First test, global workflow", function () {
+  //TODO check reward token is D4A
+  describe.skip("First test, global workflow", function () {
     beforeEach(async function () {
       D4AInstance = await D4Atoken.deployed({ from: owner });
       MarketInstance = await Market.deployed(D4AInstance.address, { from: owner });
@@ -55,18 +57,94 @@ contract("Market", (accounts) => {
     });
   });
 
-  // it('should read newly written values', async() => {
-  //   const simpleStorageInstance = await SimpleStorage.deployed();
-  //   var value = (await simpleStorageInstance.read.call()).toNumber();
+  describe.skip("test addToken and getToken", function () {
+    beforeEach(async function () {
+      D4AInstance = await D4Atoken.new({ from: owner });
+      MarketInstance = await Market.new(D4AInstance.address, { from: owner });
+    });
 
-  //   assert.equal(value, 0, "0 wasn't the initial value");
+    context("test on failure", function () {
+      it("should not add token if not the owner, revert", async () => {
+        await expectRevert(MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), { from: account1 }), "Ownable: caller is not the owner");
+      });
 
-  //   await simpleStorageInstance.write(1);
-  //   value = (await simpleStorageInstance.read.call()).toNumber();
-  //   assert.equal(value, 1, "1 was not written");
+      it("should not add token if token already supported, revert", async () => {
+        await MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), { from: owner });
+        await expectRevert(MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), { from: owner }), "Token already supported");
+      });
+    });
 
-  //   await simpleStorageInstance.write(2);
-  //   value = (await simpleStorageInstance.read.call()).toNumber();
-  //   assert.equal(value, 2, "2 was not written");
-  // });
+    context("test on success", function () {
+      it("should add token, get token", async () => {
+        await MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), { from: owner });
+        const storedData = await MarketInstance.getReserve(D4AInstance.address, { from: owner });
+        await expect(storedData.token).equal(D4AInstance.address);
+      });
+
+      it("should add token, get rewardPerHourFor1TKN", async () => {
+        await MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), { from: owner });
+        const storedData = await MarketInstance.getReserve(D4AInstance.address, { from: owner });
+        await expect(BigInt(storedData.rewardPerHourFor1TKN)).equal(BigInt(1 * 10 ** 18));
+      });
+
+      it("should add token, get isSupported", async () => {
+        await MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), { from: owner });
+        const storedData = await MarketInstance.getReserve(D4AInstance.address, { from: owner });
+        await expect(storedData.isSupported).to.be.true;
+      });
+
+      it("should add token, get tokens[0]", async () => {
+        await MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), { from: owner });
+        const storedData = await MarketInstance.tokens(0, { from: owner });
+        await expect(storedData).equal(D4AInstance.address);
+      });
+
+      it("should add token, get event TokenAdded", async () => {
+        const findEvent = await MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), { from: owner });
+        expectEvent(findEvent, "TokenAdded", { asset: D4AInstance.address });
+      });
+    });
+  });
+
+  describe("test addToken and getToken", function () {
+    beforeEach(async function () {
+      D4AInstance = await D4Atoken.new({ from: owner });
+      MarketInstance = await Market.new(D4AInstance.address, { from: owner });
+      await D4AInstance.addAdmin(owner, { from: owner });
+      await D4AInstance.mint(account1, BigInt(12 * 10 ** 18), { from: owner });
+      await D4AInstance.approve(MarketInstance.address, BigInt(10 * 10 ** 18), { from: account1 });
+      await MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), { from: owner });
+    });
+
+    context("test on failure", function () {
+      it("should not deposit if token not supported, revert", async () => {
+        await expectRevert(MarketInstance.deposit(BigInt(1 * 10 ** 18), aaveDAI, { from: account1 }), "Token not supported");
+      });
+
+      it("should not deposit if not enough funds, revert", async () => {
+        await expectRevert(MarketInstance.deposit(BigInt(12 * 10 ** 18), D4AInstance.address, { from: account1 }), "ERC20: insufficient allowance");
+      });
+    });
+
+    context("test on success", function () {
+      it("should deposit, get balance amount", async () => {
+        await MarketInstance.deposit(BigInt(1 * 10 ** 18), D4AInstance.address, { from: account1 });
+        const storedData = await MarketInstance.getBalance(D4AInstance.address, { from: account1 });
+        await expect(BigInt(storedData)).to.be.equal(BigInt(1 * 10 ** 18));
+      });
+    });
+
+    context("test on success", function () {
+      it("should deposit, get lastTransactTimeStamp", async () => {
+        await MarketInstance.deposit(BigInt(1 * 10 ** 18), D4AInstance.address, { from: account1 });
+        const storedData = await MarketInstance.getLastTransact(D4AInstance.address, { from: account1 });
+        await expect(parseInt(storedData)).to.be.above(0);
+      });
+    });
+
+    it("should deposit, get event Deposited", async () => {
+      const findEvent = await MarketInstance.deposit(BigInt(1 * 10 ** 18), D4AInstance.address, { from: account1 });
+      expectEvent(findEvent, "Deposited", { amount: BigInt(1 * 10 ** 18).toString(), asset: D4AInstance.address, user: account1 });
+    });
+  });
 });
