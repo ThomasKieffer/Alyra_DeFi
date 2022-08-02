@@ -69,7 +69,7 @@ contract Market  is Ownable {
     function withdraw(uint _amount, address _asset) external onlySupportedToken(_asset) {
         // require(reserves[asset].balanceOf(address(this)) >= amount, "Withdrawing too much"); pretty sure it's useless because the transfert will simply not append
         require(getBalance(_asset) >= _amount, "Withdrawing too much");
-        require(reserves[_asset].token.transfer(msg.sender, _amount), "Withdraw failed");
+        reserves[_asset].token.transfer(msg.sender, _amount);
         updateRewardBalance(_asset);
         balances[msg.sender][_asset].amount -= _amount;
         if(getBalance(_asset) > 0 ){
