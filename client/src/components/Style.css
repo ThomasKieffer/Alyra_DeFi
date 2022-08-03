@@ -1,0 +1,26 @@
+.Header {
+    display: flex;
+    width: 100%;
+    background: #7cbb86;
+    padding: 10px;
+}
+
+.Main {
+    height: 100vh;
+    position: relative;
+}
+
+.Wallet {
+    margin-left: auto;
+}
+
+.Content {
+    margin: 0 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.Content > .Button {
+    max-width: 80%;
+    margin: 0 auto;
+}
