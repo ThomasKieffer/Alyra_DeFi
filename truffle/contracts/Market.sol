@@ -87,7 +87,7 @@ contract Market  is Ownable {
             tokenAddr = tokens[i];
             if(getLastTransact(tokenAddr) > 0 ) {
                 updateRewardBalance(tokenAddr);
-                // balances[msg.sender][tokenAddr].lastTransactTimeStamp = block.timestamp;
+                balances[msg.sender][tokenAddr].lastTransactTimeStamp = block.timestamp;
             }
         }
         require(rewardBalances[msg.sender] > 0, "No rewards to be minted");
