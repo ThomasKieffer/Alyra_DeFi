@@ -60,9 +60,9 @@ contract Market  is Ownable {
     //BE CAREFULL of reentrency !
     function deposit(uint _amount, address _asset) external onlySupportedToken(_asset) {
         reserves[_asset].token.transferFrom(msg.sender, address(this), _amount);
+        balances[msg.sender][_asset].lastTransactTimeStamp = block.timestamp;
         updateRewardBalance(_asset);
         balances[msg.sender][_asset].amount += _amount;
-        balances[msg.sender][_asset].lastTransactTimeStamp = block.timestamp;
         emit Deposited(_amount, _asset, msg.sender);
     }
 
@@ -87,7 +87,7 @@ contract Market  is Ownable {
             tokenAddr = tokens[i];
             if(getLastTransact(tokenAddr) > 0 ) {
                 updateRewardBalance(tokenAddr);
-                balances[msg.sender][tokenAddr].lastTransactTimeStamp = block.timestamp;
+                // balances[msg.sender][tokenAddr].lastTransactTimeStamp = block.timestamp;
             }
         }
         require(rewardBalances[msg.sender] > 0, "No rewards to be minted");
@@ -107,7 +107,7 @@ contract Market  is Ownable {
         uint currentBalance = getBalance(_asset);
         uint lastTransact = getLastTransact(_asset);
         uint rewardPerHourFor1TKN = reserves[_asset].rewardPerHourFor1TKN;
-        if(lastTransact > 0) {
+        if(lastTransact > 0 && currentBalance > 0) {
             //We have to calculate the number of rewards by hour for the current balance
             uint rewardCurrentBalance = (currentBalance * rewardPerHourFor1TKN)/(1 ether);
             //We can now calculate the rewards gained

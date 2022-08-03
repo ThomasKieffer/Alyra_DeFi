@@ -41,14 +41,18 @@ contract("Market", (accounts) => {
 
       //deposit from account1
       await MarketInstance.deposit(BigInt(1 * 10 ** 18), D4AInstance.address, { from: account1 });
-      await sleep(2000);
 
-      //withdraw from account1
-      await MarketInstance.withdraw(BigInt(1 * 10 ** 18), D4AInstance.address, { from: account1, gas: 100000 });
-      await sleep(2000);
+      setTimeout(async function () {
+        await MarketInstance.claim({ from: account1 });
+      }, 2000);
+      // await MarketInstance.claim({ from: account1 });
 
-      //claim from account1
-      await MarketInstance.claim({ from: account1 });
+      // //withdraw from account1
+      // await MarketInstance.withdraw(BigInt(1 * 10 ** 18), D4AInstance.address, { from: account1, gas: 100000 });
+      // await sleep(2000);
+
+      // //claim from account1
+      // await MarketInstance.claim({ from: account1 });
     });
 
     it("Test write tkn address", async () => {
@@ -57,7 +61,7 @@ contract("Market", (accounts) => {
     });
   });
 
-  describe.skip("test addToken and getToken", function () {
+  describe("test addToken and getToken", function () {
     beforeEach(async function () {
       D4AInstance = await D4Atoken.new({ from: owner });
       MarketInstance = await Market.new(D4AInstance.address, { from: owner });
@@ -106,7 +110,7 @@ contract("Market", (accounts) => {
     });
   });
 
-  describe.skip("test deposit and getBalance", function () {
+  describe("test deposit and getBalance", function () {
     beforeEach(async function () {
       D4AInstance = await D4Atoken.new({ from: owner });
       MarketInstance = await Market.new(D4AInstance.address, { from: owner });
@@ -154,7 +158,7 @@ contract("Market", (accounts) => {
       await D4AInstance.mint(account1, BigInt(12 * 10 ** 18), { from: owner });
       await D4AInstance.approve(MarketInstance.address, BigInt(10 * 10 ** 18), { from: account1 });
       await MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), { from: owner });
-      const findEvent = await MarketInstance.deposit(BigInt(10 * 10 ** 18), D4AInstance.address, { from: account1 });
+      await MarketInstance.deposit(BigInt(10 * 10 ** 18), D4AInstance.address, { from: account1 });
     });
 
     context("test on failure", function () {
@@ -189,6 +193,57 @@ contract("Market", (accounts) => {
       it("should withdraw, get event Withdrawn", async () => {
         const findEvent = await MarketInstance.withdraw(BigInt(1 * 10 ** 18), D4AInstance.address, { from: account1, gas: 100000 });
         expectEvent(findEvent, "Withdrawn", { amount: BigInt(1 * 10 ** 18).toString(), asset: D4AInstance.address, user: account1 });
+      });
+    });
+  });
+
+  describe("test claim and getRewardBalance", function () {
+    beforeEach(async function () {
+      D4AInstance = await D4Atoken.new({ from: owner });
+      MarketInstance = await Market.new(D4AInstance.address, { from: owner });
+      await D4AInstance.addAdmin(owner, { from: owner });
+      await D4AInstance.mint(account1, BigInt(12 * 10 ** 18), { from: owner });
+      await D4AInstance.approve(MarketInstance.address, BigInt(10 * 10 ** 18), { from: account1 });
+      await MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), { from: owner });
+    });
+
+    context("test on failure", function () {
+      it("should not get rewards if no rewards, revert", async () => {
+        await expectRevert(MarketInstance.claim({ from: account1 }), "No rewards to be minted");
+      });
+    });
+
+    context("test on success", function () {
+      it("should claim, get rewardBalance", async () => {
+        await MarketInstance.deposit(BigInt(10 * 10 ** 18), D4AInstance.address, { from: account1 });
+        setTimeout(async function () {
+          await MarketInstance.claim({ from: account1 });
+        }, 2000);
+        const storedData = await MarketInstance.rewardToken({ from: account1 });
+        await expect(parseInt(storedData)).to.be.above(0);
+      });
+
+      it("should claim, get token balance of account1", async () => {
+        await MarketInstance.deposit(BigInt(10 * 10 ** 18), D4AInstance.address, { from: account1 });
+        const balanceBeforeClaim = await D4AInstance.balanceOf(account1, { from: account1 });
+        setTimeout(async function () {
+          await MarketInstance.claim({ from: account1 });
+        }, 2000);
+        const balanceAfterClaim = await D4AInstance.balanceOf(account1, { from: account1 });
+        setTimeout(async function () {
+          await expect(parseInt(balanceAfterClaim)).to.be.above(parseInt(balanceBeforeClaim));
+        }, 2000);
+      });
+
+      it("should claim, get event Claimed", async () => {
+        await MarketInstance.deposit(BigInt(10 * 10 ** 18), D4AInstance.address, { from: account1 });
+        let findEvent;
+        setTimeout(async function () {
+          findEvent = await MarketInstance.claim({ from: account1 });
+        }, 2000);
+        setTimeout(async function () {
+          expectEvent(findEvent, "Claimed", { amount: BigInt(1 * 10 ** 18), asset: D4AInstance.address, user: account1 });
+        }, 2000);
       });
     });
   });
