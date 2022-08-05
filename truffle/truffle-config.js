@@ -42,7 +42,7 @@ module.exports = {
     reporterOptions: {
       gasPrice: 1,
       token: "ETH",
-      showTimeSpent: true,
+      // showTimeSpent: true,
     },
   },
 
