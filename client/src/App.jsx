@@ -28,12 +28,14 @@ const theme = createTheme({
 });
 
 function App() {
+
   useEffect(() => {
     (async () => {
       await web3;
       await loadContract();
     })();
   }, []);
+  
   return (
       <ThemeProvider theme={theme}>
         <Main />
