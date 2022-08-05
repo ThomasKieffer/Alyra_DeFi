@@ -22,42 +22,42 @@ contract("Market", (accounts) => {
 
     context("test on failure", function () {
       it("should not add token if not the owner, revert", async () => {
-        expectRevert(MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), { from: account1 }), "Ownable: caller is not the owner");
+        expectRevert(MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), "DAI", { from: account1 }), "Ownable: caller is not the owner");
       });
 
       it("should not add token if token already supported, revert", async () => {
-        await MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), { from: owner });
-        expectRevert(MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), { from: owner }), "Token already supported");
+        await MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), "DAI", { from: owner });
+        expectRevert(MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), "DAI", { from: owner }), "Token already supported");
       });
     });
 
     context("test on success", function () {
       it("should add token, get token", async () => {
-        await MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), { from: owner });
+        await MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), "DAI", { from: owner });
         const storedData = await MarketInstance.getReserve(D4AInstance.address, { from: owner });
         expect(storedData.token).equal(D4AInstance.address);
       });
 
       it("should add token, get rewardPerHourFor1TKN", async () => {
-        await MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), { from: owner });
+        await MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), "DAI", { from: owner });
         const storedData = await MarketInstance.getReserve(D4AInstance.address, { from: owner });
         expect(BigInt(storedData.rewardPerHourFor1TKN)).equal(BigInt(1 * 10 ** 18));
       });
 
       it("should add token, get isSupported", async () => {
-        await MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), { from: owner });
+        await MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), "DAI", { from: owner });
         const storedData = await MarketInstance.getReserve(D4AInstance.address, { from: owner });
         expect(storedData.isSupported).to.be.true;
       });
 
       it("should add token, get tokens[0]", async () => {
-        await MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), { from: owner });
+        await MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), "DAI", { from: owner });
         const storedData = await MarketInstance.tokens(0, { from: owner });
         expect(storedData).equal(D4AInstance.address);
       });
 
       it("should add token, get event TokenAdded", async () => {
-        const findEvent = await MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), { from: owner });
+        const findEvent = await MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), "DAI", { from: owner });
         expectEvent(findEvent, "TokenAdded", { asset: D4AInstance.address });
       });
     });
@@ -70,7 +70,7 @@ contract("Market", (accounts) => {
       await D4AInstance.addAdmin(owner, { from: owner });
       await D4AInstance.mint(account1, BigInt(12 * 10 ** 18), { from: owner });
       await D4AInstance.approve(MarketInstance.address, BigInt(10 * 10 ** 18), { from: account1 });
-      await MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), { from: owner });
+      await MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), "DAI", { from: owner });
     });
 
     context("test on failure", function () {
@@ -116,7 +116,7 @@ contract("Market", (accounts) => {
       await D4AInstance.addAdmin(owner, { from: owner });
       await D4AInstance.mint(account1, BigInt(12 * 10 ** 18), { from: owner });
       await D4AInstance.approve(MarketInstance.address, BigInt(10 * 10 ** 18), { from: account1 });
-      await MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), { from: owner });
+      await MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), "DAI", { from: owner });
       await MarketInstance.deposit(BigInt(10 * 10 ** 18), D4AInstance.address, { from: account1 });
     });
 
@@ -169,7 +169,7 @@ contract("Market", (accounts) => {
       await D4AInstance.addAdmin(owner, { from: owner });
       await D4AInstance.mint(account1, BigInt(12 * 10 ** 18), { from: owner });
       await D4AInstance.approve(MarketInstance.address, BigInt(10 * 10 ** 18), { from: account1 });
-      await MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), { from: owner });
+      await MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), "DAI", { from: owner });
     });
 
     context("test on failure", function () {
@@ -220,7 +220,7 @@ contract("Market", (accounts) => {
       await D4AInstance.addAdmin(owner, { from: owner });
       await D4AInstance.mint(account1, BigInt(15 * 10 ** 18), { from: owner });
       await D4AInstance.approve(MarketInstance.address, BigInt(10 * 10 ** 18), { from: account1 });
-      await MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), { from: owner });
+      await MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), "DAI", { from: owner });
     });
 
     context("test on success", function () {
@@ -285,4 +285,26 @@ contract("Market", (accounts) => {
       });
     });
   });
+
+  //Cannot test this way because of chainlink, need mocktest
+  // describe.only("test priceOf", function () {
+  //   beforeEach(async function () {
+  //     D4AInstance = await D4Atoken.new({ from: owner });
+  //     MarketInstance = await Market.new(D4AInstance.address, { from: owner });
+  //     await MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), { from: owner });
+  //   });
+
+  //   context("test on failure", function () {
+  //     it("should not get price if token already supported, revert", async () => {
+  //       expectRevert(await MarketInstance.priceOf(aaveDAI, { from: owner }), "Token not supported");
+  //     });
+  //   });
+
+  //   context("test on success", function () {
+  //     it("should get price of DAI in USD", async () => {
+  //       const storedData = await MarketInstance.priceOf(D4AInstance.address, { from: owner });
+  //       expect(new BN(storedData)).to.be.equal(new BN(1 * 10 ** 18));
+  //     });
+  //   });
+  // });
 });

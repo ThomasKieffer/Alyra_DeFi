@@ -5,12 +5,14 @@ pragma solidity 0.8.14;
 import "../node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
 import "./D4Atoken.sol";
+import "./ChainlinkKovanUSD.sol";
 
-contract Market  is Ownable {
+contract Market is Ownable {
 
     // We need to keep the timestamp of the last transaction(deposit, withdraw or claim) to calculate the reward balance at each of those actions
     struct  Reserve {
         ERC20 token;
+        string priceSymbol;
         uint rewardPerHourFor1TKN; //we want X tokens per hour for 1 stacked token
         bool isSupported;
     }
@@ -29,6 +31,7 @@ contract Market  is Ownable {
     //because onlyOwner can add tokens we shouldn't have an array too big
     address[] public tokens;
     D4Atoken public rewardToken;
+    ChainlinkKovanUSD pricesUSD;
     
     event TokenAdded(address asset);
     event Deposited(uint amount, address asset, address user);
@@ -43,18 +46,24 @@ contract Market  is Ownable {
 
     constructor(D4Atoken _rewardToken) {
         rewardToken = _rewardToken;
+        pricesUSD = new ChainlinkKovanUSD();
     } 
 
     //Owner can add ERC20 token with their addresses
-    function addToken(address _asset, uint _rewardPerHourFor1TKN) external onlyOwner {
+    function addToken(address _asset, uint _rewardPerHourFor1TKN, string memory _priceSymbol) external onlyOwner {
         require(reserves[_asset].isSupported == false ,"Token already supported");
         reserves[_asset] = Reserve({
             token: ERC20(_asset), 
+            priceSymbol : _priceSymbol,
             rewardPerHourFor1TKN: _rewardPerHourFor1TKN,
             isSupported: true
         });
         tokens.push(_asset);
         emit TokenAdded(_asset);
+    }
+
+    function priceOf(address _asset) external view onlySupportedToken(_asset) returns (int) {
+        return pricesUSD.getLatestPrice(reserves[_asset].priceSymbol);
     }
 
     //BE CAREFULL of reentrency !
