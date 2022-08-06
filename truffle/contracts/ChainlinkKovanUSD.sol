@@ -1,14 +1,18 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity 0.8.14;
 
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
+/// @title ChainlinkKovanUSD
+/// @notice Get USD prices for various assets on Kovan
+/// @dev Must be used with Market.sol to get ERC20 prices.
 contract ChainlinkKovanUSD {
     mapping(string => address) ERC20ToUSD;
 
     /* Network: Kovan  */
 
+    /// @notice Establishes a map of tokens to USD from Chainlink Kovan ( https://docs.chain.link/docs/ethereum-addresses/#Kovan%20Testnet )
+    /// @dev Only tokens that have a conversion to USD are present.
     constructor() {
         ERC20ToUSD['BAT']   = 0x8e67A0CFfbbF6A346ce87DFe06daE2dc782b3219;
         ERC20ToUSD['BNB']   = 0x8993ED705cdf5e84D0a3B754b5Ee0e1783fcdF16;
@@ -42,6 +46,9 @@ contract ChainlinkKovanUSD {
         ERC20ToUSD['sCEX']  = 0xA85646318D20C684f6251097d24A6e74Fe1ED5eB;
     }
 
+    /// @notice Retrieve the actual price of a given token.
+    /// @param _symbol The symbol of the token.
+    /// @return The price in USD for the token.
     function getLatestPrice(string memory _symbol) public view returns (int256) {
         AggregatorV3Interface priceFeed = AggregatorV3Interface(ERC20ToUSD[_symbol]);
         (
