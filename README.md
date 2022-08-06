@@ -1,6 +1,19 @@
 # Alyra DeFi  project
 
-This is our collaborative DeFi project for the Alya school. 
+This is our collaborative DeFi project for the Alya school.
+<ul>
+    <li><a href="https://github.com/juliench82">Julien C.</a></li>
+    <li><a href="https://github.com/GuillaumeVerb">Guillaume Verbiguié</a></li>
+    <li><a href="https://github.com/ThomasKieffer">Thomas Kieffer</a></li>
+</ul>
+
+## Workflow tour in videos
+
+<ul>
+    <li><a href="https://www.loom.com/share/b1446a9e7ada41e2a54de9ac63d0377a">Backend global presentation (Fr)</a></li>
+    <li><a href="https://www.loom.com/share/c80e3bd23f1d4baca074993805813290">Market.sol detailed and reward system explained (Fr)</a></li>
+    <li><a href="https://www.loom.com/share/2ebe6f98341340acb2ec959d0c8fedc8">Units tests overview (Fr)</a></li>
+</ul>
 
 ## Installation Dev
 You have to have cloned the project.
