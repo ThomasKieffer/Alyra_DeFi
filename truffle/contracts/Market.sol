@@ -26,9 +26,9 @@ contract Market is Ownable {
     //we make a map for each users addresses we have a map of token addresses to the user balance in that token
     mapping(address => Reserve) private reserves;
 
-    //the amount of rewards for each users
     mapping(address => mapping(address => Balance)) private balances;
-
+    
+    //the amount of rewards for each users
     mapping(address => uint) private rewardBalances;
 
     //we have to keep the addresses of accepted tokens to iterate over the map when we claim
@@ -102,7 +102,6 @@ contract Market is Ownable {
     /// @param _asset The address of the token to be withdrawn.
     function withdraw(uint _amount, address _asset) external onlySupportedToken(_asset) {
         require(getBalance(_asset) >= _amount, "Withdrawing too much");
-        reserves[_asset].token.transfer(msg.sender, _amount);
         updateRewardBalance(_asset);
         balances[msg.sender][_asset].amount -= _amount;
         if(getBalance(_asset) > 0 ){
@@ -110,6 +109,7 @@ contract Market is Ownable {
         } else {
             balances[msg.sender][_asset].lastTransactTimeStamp = 0;
         }
+        reserves[_asset].token.transfer(msg.sender, _amount);
         emit Withdrawn(_amount,  _asset, msg.sender);
     }
 
@@ -132,11 +132,18 @@ contract Market is Ownable {
         emit Claimed(reward, msg.sender);
     }
 
-    /// @notice Update the global reward balance of a user with the rewards accumulated for one token.
-    /// @dev Keeping track of the last transaction (deposit, withdraw, claim), allow us to update the global reward balance each time we make a transaction (deposit, withdraw, claim).
-    function updateRewardBalance(address _asset) private onlySupportedToken(_asset) {
-        rewardBalances[msg.sender] += calculateRewardEarned(_asset);
-        emit RewardUpdated(rewardBalances[msg.sender], msg.sender);
+    /// @notice Calculate the global reward balance of a user with the rewards accumulated for ALL tokens.
+    /// @dev This function allow to check the global rewards without modifying state variables. Developper can then call this function rapidely in the front-end.
+    function calculateTotalRewardEarned() external view returns(uint) {
+        address tokenAddr;
+        uint totalRewards = rewardBalances[msg.sender];
+        for(uint i = 0; i < tokens.length; ++i){
+            tokenAddr = tokens[i];
+            if( getLastTransact(tokenAddr) > 0 ) {
+                totalRewards += calculateRewardEarned(tokenAddr);
+            }
+        }
+        return totalRewards;
     }
 
     /// @notice Calculate the rewards earned for a specific token.
@@ -156,18 +163,11 @@ contract Market is Ownable {
         }
     }
 
-    /// @notice Calculate the global reward balance of a user with the rewards accumulated for ALL tokens.
-    /// @dev This function allow to check the global rewards without modifying state variables. Developper can then call this function rapidely in the front-end.
-    function calculateTotalRewardEarned() public view returns(uint) {
-        address tokenAddr;
-        uint totalRewards = rewardBalances[msg.sender];
-        for(uint i = 0; i < tokens.length; ++i){
-            tokenAddr = tokens[i];
-            if( getLastTransact(tokenAddr) > 0 ) {
-                totalRewards += calculateRewardEarned(tokenAddr);
-            }
-        }
-        return totalRewards;
+    /// @notice Update the global reward balance of a user with the rewards accumulated for one token.
+    /// @dev Keeping track of the last transaction (deposit, withdraw, claim), allow us to update the global reward balance each time we make a transaction (deposit, withdraw, claim).
+    function updateRewardBalance(address _asset) private onlySupportedToken(_asset) {
+        rewardBalances[msg.sender] += calculateRewardEarned(_asset);
+        emit RewardUpdated(rewardBalances[msg.sender], msg.sender);
     }
 
     /// @notice Retrieve the amount of token stacked.
