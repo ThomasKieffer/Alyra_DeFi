@@ -5,8 +5,6 @@ const { BN, expectRevert, expectEvent } = require("@openzeppelin/test-helpers");
 const { expect } = require("chai");
 
 contract("Market", (accounts) => {
-  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-
   const owner = accounts[0];
   const account1 = accounts[1];
 

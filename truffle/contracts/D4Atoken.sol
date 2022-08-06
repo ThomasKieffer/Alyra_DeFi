@@ -23,4 +23,9 @@ contract D4Atoken is ERC20, Ownable {
     function removeAdmin(address _admin) external onlyOwner {
         admins[_admin] = false;
     }
+
+    //for tests
+    function getAdmin(address _admin) external view returns (bool) {
+        return admins[_admin];
+    }
 }
