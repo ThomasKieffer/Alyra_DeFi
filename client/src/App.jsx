@@ -35,7 +35,6 @@ function App() {
         console.error(error);
       }
     }
-
     setUpWeb3();
   }, []);
 
