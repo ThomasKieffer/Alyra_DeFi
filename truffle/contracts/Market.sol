@@ -23,9 +23,9 @@ contract Market is Ownable {
         uint lastTransactTimeStamp;
     }
 
-    //we make a map for each users addresses we have a map of token addresses to the user balance in that token
     mapping(address => Reserve) private reserves;
 
+    //we make a map for each users addresses we have a map of token addresses to the user balance in that token
     mapping(address => mapping(address => Balance)) private balances;
     
     //the amount of rewards for each users
