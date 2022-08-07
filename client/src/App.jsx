@@ -1,3 +1,5 @@
+/* global BigInt */
+
 import React, { useState, useEffect } from "react";
 import MarketContract from "./contracts/Market.json";
 import getWeb3 from "./getWeb3";
@@ -28,8 +30,22 @@ function App() {
         setAccounts(accounts);
         // setContract(instance);
 
-        const token0 = await instance.methods.tokens(0).call({ from: accounts[0] });
-        console.log(token0);
+        const rewardTokenAddr = await instance.methods.rewardToken().call({ from: accounts[0] });
+        console.log("rewardToken : ");
+        console.log(rewardTokenAddr);
+
+        const owner = await instance.methods.owner().call({ from: accounts[0] });
+        console.log("owner : ");
+        console.log(owner);
+
+        // await instance.methods.addToken(rewardTokenAddr, BigInt(1 * 10 ** 18), "DAI").send({ from: accounts[0] });
+        const rewardTokenPrice = await instance.methods.priceOf(rewardTokenAddr).call({ from: accounts[0] });
+        console.log("rewardTokenPrice : ");
+        console.log(rewardTokenPrice);
+
+        // const token0 = await instance.methods.tokens(0).call({ from: accounts[0] });
+        // console.log("token0 : ");
+        // console.log(token0);
       } catch (error) {
         alert(`Failed to load web3, accounts, or contract. Check console for details.`);
         console.error(error);
