@@ -165,6 +165,7 @@ contract("Market", (accounts) => {
       D4AInstance = await D4Atoken.new({ from: owner });
       MarketInstance = await Market.new(D4AInstance.address, { from: owner });
       await D4AInstance.addAdmin(owner, { from: owner });
+      await D4AInstance.addAdmin(MarketInstance.address, { from: owner });
       await D4AInstance.mint(account1, BigInt(12 * 10 ** 18), { from: owner });
       await D4AInstance.approve(MarketInstance.address, BigInt(10 * 10 ** 18), { from: account1 });
       await MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), "DAI", { from: owner });
@@ -216,6 +217,7 @@ contract("Market", (accounts) => {
       D4AInstance = await D4Atoken.new({ from: owner });
       MarketInstance = await Market.new(D4AInstance.address, { from: owner });
       await D4AInstance.addAdmin(owner, { from: owner });
+      await D4AInstance.addAdmin(MarketInstance.address, { from: owner });
       await D4AInstance.mint(account1, BigInt(15 * 10 ** 18), { from: owner });
       await D4AInstance.approve(MarketInstance.address, BigInt(10 * 10 ** 18), { from: account1 });
       await MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), "DAI", { from: owner });
