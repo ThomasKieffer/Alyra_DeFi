@@ -2,7 +2,7 @@
 
 This is our collaborative DeFi project for the Alya school.
 <ul>
-    <li><a href="https://github.com/juliench82">Julien C.</a></li>
+    <li><a href="https://github.com/juliench82">Julien Chevallier</a></li>
     <li><a href="https://github.com/GuillaumeVerb">Guillaume Verbiguié</a></li>
     <li><a href="https://github.com/ThomasKieffer">Thomas Kieffer</a></li>
 </ul>
@@ -54,3 +54,5 @@ $ await MarketInstance.addToken(D4AInstance.address, BigInt(1 * 10 ** 18), "DAI"
 $ let price = await MarketInstance.priceOf(D4AInstance.address);
 $ price.toString();
 ```
+
+[![N|Solid](https://i.ibb.co/f1MXK4C/front.png)]
