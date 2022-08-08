@@ -55,4 +55,8 @@ $ let price = await MarketInstance.priceOf(D4AInstance.address);
 $ price.toString();
 ```
 
+## Front
+
+This is what our app is meant to look like :
+
 [![N|Solid](https://i.ibb.co/f1MXK4C/front.png)]
