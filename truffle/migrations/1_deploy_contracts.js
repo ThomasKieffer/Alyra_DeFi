@@ -1,12 +1,28 @@
-//test on Ganache
-const D4A = artifacts.require("D4Atoken");
-const ChainlinkKovanUSD = artifacts.require("ChainlinkKovanUSD");
-const Market = artifacts.require("Market");
+const web3 = require('web3');
 
-module.exports = async function(deployer, _network, accounts) {
-  await deployer.deploy(D4A);
-  const d4a = await D4A.deployed();
-  await deployer.deploy(ChainlinkKovanUSD);
-  const market = await deployer.deploy(Market, d4a.address);
+const D4Atoken = artifacts.require("D4Atoken");
+const Market = artifacts.require("Market");
+const USDC = artifacts.require("./USDC");
+
+function tokens(n) {
+  return web3.utils.toWei(n, "ether");
+}
+
+module.exports = async function(deployer, network, account) {
+
+  await deployer.deploy(D4Atoken);
+  const d4a = await D4Atoken.deployed();
+
+  await deployer.deploy(Market, d4a.address);
+  const market = await Market.deployed();
+
+  if (network === 'development') {
+
   await market.addToken(d4a.address, BigInt(1 * 10 ** 18), "DAI");
+  }
+
+  else if (network === 'kovan') {
+    await market.addToken("0xFf795577d9AC8bD7D90Ee22b6C1703490b6512FD", "10000000000000000000", "ETH")
+  }
+
 };

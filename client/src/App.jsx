@@ -3,14 +3,31 @@
 import React, { useState, useEffect } from "react";
 import MarketContract from "./contracts/Market.json";
 import getWeb3 from "./getWeb3";
+import Main from "./Main";
+import web3 from "./utilities/web3";
+import {loadContract} from "./utilities/contract";
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 
-// import UserAddress from "./components/UserAddress.jsx";
-// import Workflow from "./components/Workflow";
-// import Voters from "./components/Voters";
-// import Proposals from "./components/Proposals";
-// import SetVote from "./components/SetVote";
-
-import "./App.css";
+const theme = createTheme({
+  palette: {
+      primary: {
+          main: "#000000",
+          light: "#b3ebbb"
+      },
+      inverse: {
+          main: "#ffffff",
+          light: "#b3ebbb",
+          contrastText: "#19ac2c"
+      }
+  },
+  components: {
+      MuiButtonBase: {
+          defaultProps: {
+              variant: "Outlined"
+          },
+      },
+  }
+});
 
 function App() {
   // const [web3, setWeb3] = useState(null);
@@ -18,6 +35,12 @@ function App() {
   // const [contract, setContract] = useState("");
 
   useEffect(() => {
+
+    (async () => {
+      await web3;
+      await loadContract();
+    })();
+
     async function setUpWeb3() {
       try {
         const web3Provider = await getWeb3();
@@ -61,11 +84,9 @@ function App() {
   }, []);
 
   return (
-    <div id="App">
-      <div className="container">
-        <h1>DeFi account = {accounts}</h1>
-      </div>
-    </div>
+    <ThemeProvider theme={theme}>
+    <Main />
+  </ThemeProvider>
   );
 }
 
