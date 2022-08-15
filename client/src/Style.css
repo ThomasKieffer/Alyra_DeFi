@@ -1,7 +1,7 @@
 .Header {
     display: flex;
     width: 100%;
-    background: #7cbb86;
+    background: #7cbb866e;
     padding: 10px;
 }
 
@@ -20,7 +20,7 @@
     flex-direction: column;
 }
 
-.Content > .Button {
+.Content > .Wallet {
     max-width: 80%;
     margin: 0 auto;
 }
@@ -28,17 +28,6 @@
 .Main {
     height: 100vh;
     position: relative;
-}
-
-.Content {
-    margin: 0 20px;
-    display: flex;
-    flex-direction: column;
-}
-
-.Content > .Button {
-    max-width: 80%;
-    margin: 0 auto;
 }
 
 .account {
